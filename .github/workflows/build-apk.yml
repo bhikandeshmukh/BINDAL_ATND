@@ -37,16 +37,38 @@ jobs:
     - name: Grant execute permission for gradlew
       run: chmod +x android-app/gradlew
       
-    - name: Build Debug APK
+    - name: Build Debug & Release APKs
       run: |
         cd android-app
         ./gradlew assembleDebug
-    
-    - name: Upload APK Artifact
-      uses: actions/upload-artifact@v4
+        ./gradlew assembleRelease
+      
+    - name: Check for Signing Key
+      id: check_key
+      run: |
+        if [ -n "${{ secrets.SIGNING_KEY }}" ]; then
+          echo "has_key=true" >> $GITHUB_OUTPUT
+        else
+          echo "has_key=false" >> $GITHUB_OUTPUT
+        fi
+      shell: bash
+
+    - name: Sign Release APK
+      if: steps.check_key.outputs.has_key == 'true'
+      id: sign_app
+      uses: r0adkll/sign-android-release@v1
       with:
-        name: bindal-punching-debug
-        path: android-app/app/build/outputs/apk/debug/app-debug.apk
+        releaseDirectory: android-app/app/build/outputs/apk/release
+        signingKeyBase64: ${{ secrets.SIGNING_KEY }}
+        alias: ${{ secrets.ALIAS }}
+        keyStorePassword: ${{ secrets.KEY_STORE_PASSWORD }}
+        keyPassword: ${{ secrets.KEY_PASSWORD }}
+
+    - name: Rename Signed APK
+      if: steps.check_key.outputs.has_key == 'true'
+      run: |
+        mv ${{ steps.sign_app.outputs.signedReleaseFile }} android-app/app/build/outputs/apk/release/bindal-punching-release-signed.apk
+      shell: bash
 
     - name: Create Release
       id: create_release
@@ -56,6 +78,8 @@ jobs:
         name: Release v1.0.${{ github.run_number }}
         draft: false
         prerelease: false
-        files: android-app/app/build/outputs/apk/debug/app-debug.apk
+        files: |
+          android-app/app/build/outputs/apk/debug/app-debug.apk
+          android-app/app/build/outputs/apk/release/*.apk
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
