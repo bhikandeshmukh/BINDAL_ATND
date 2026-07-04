@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Attendance Tracker - Android UI Preview</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Roboto', sans-serif; background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); min-height: 100vh; }
+        
+        /* Gallery Container */
+        .gallery-container { padding: 40px 20px; display: flex; justify-content: center; min-height: 100vh; align-items: center; }
+        .gallery-wrapper { position: relative; width: 100%; max-width: 420px; }
+        
+        /* Phone Frame */
+        .phone-frame { width: 380px; height: 780px; background: #F9FAFB; border-radius: 40px; overflow: hidden; box-shadow: 0 25px 80px rgba(0,0,0,0.5); position: relative; border: 10px solid #1a1a2e; margin: 0 auto; display: none; }
+        .phone-frame.active { display: block; animation: fadeIn 0.4s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+        
+        .status-bar { height: 24px; background: #2563EB; display: flex; justify-content: space-between; align-items: center; padding: 0 20px; color: white; font-size: 12px; }
+        .top-bar { background: #2563EB; color: white; padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; }
+        .top-bar h1 { font-size: 18px; font-weight: 600; }
+        .top-bar-icons { display: flex; gap: 8px; }
+        .top-bar-icons .material-icons { font-size: 22px; cursor: pointer; }
+        .content { height: calc(100% - 24px - 56px - 65px); overflow-y: auto; padding: 16px; background: #F9FAFB; }
+        .bottom-nav { position: absolute; bottom: 0; left: 0; right: 0; height: 65px; background: white; display: flex; justify-content: space-around; align-items: center; box-shadow: 0 -2px 10px rgba(0,0,0,0.1); }
+        .nav-item { display: flex; flex-direction: column; align-items: center; gap: 2px; cursor: pointer; padding: 6px 10px; border-radius: 12px; transition: all 0.2s; }
+        .nav-item.active { background: #EFF6FF; }
+        .nav-item.active .material-icons { color: #2563EB; }
+        .nav-item.active span { color: #2563EB; }
+        .nav-item .material-icons { font-size: 22px; color: #6B7280; }
+        .nav-item span { font-size: 10px; color: #6B7280; font-weight: 500; }
+        
+        /* Arrow Buttons */
+        .arrow-btn { position: absolute; top: 50%; transform: translateY(-50%); width: 50px; height: 50px; background: rgba(255,255,255,0.9); border: none; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 15px rgba(0,0,0,0.2); transition: all 0.3s; z-index: 10; }
+        .arrow-btn:hover { background: white; transform: translateY(-50%) scale(1.1); }
+        .arrow-btn .material-icons { font-size: 28px; color: #2563EB; }
+        .arrow-left { left: -70px; }
+        .arrow-right { right: -70px; }
+        
+        /* Screen Counter */
+        .screen-counter { text-align: center; margin-top: 20px; color: white; font-size: 14px; }
+        .dots { display: flex; justify-content: center; gap: 8px; margin-top: 12px; }
+        .dot { width: 10px; height: 10px; background: rgba(255,255,255,0.3); border-radius: 50%; cursor: pointer; transition: all 0.3s; }
+        .dot.active { background: #2563EB; width: 30px; border-radius: 5px; }
+        
+        /* Ad Banner */
+        .ad-banner { background: linear-gradient(90deg, #f0f0f0, #e0e0e0); height: 50px; display: flex; align-items: center; justify-content: center; border-top: 1px solid #ddd; }
+        .ad-banner span { color: #888; font-size: 11px; }
+        
+        @media (max-width: 600px) {
+            .phone-frame { width: 340px; height: 700px; }
+            .arrow-btn { display: none; }
+            .gallery-wrapper { max-width: 360px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="gallery-container">
+        <div class="gallery-wrapper">
+            <button class="arrow-btn arrow-left" onclick="prevScreen()"><span class="material-icons">chevron_left</span></button>
+            <button class="arrow-btn arrow-right" onclick="nextScreen()"><span class="material-icons">chevron_right</span></button>
+
+            <!-- Screen 0: Login -->
+            <div class="phone-frame active" data-title="Login Screen" data-desc="User authentication">
+                <div class="status-bar"><span>9:41</span><span>📶 🔋</span></div>
+                <div style="height: calc(100% - 24px); background: linear-gradient(135deg, #2563EB 0%, #7C3AED 100%); display: flex; align-items: center; justify-content: center; padding: 24px;">
+                    <div style="background: white; border-radius: 16px; padding: 28px; width: 100%; box-shadow: 0 10px 40px rgba(0,0,0,0.2);">
+                        <h1 style="text-align: center; font-size: 22px; color: #111827; margin-bottom: 6px;">Attendance Tracker</h1>
+                        <p style="text-align: center; color: #6B7280; margin-bottom: 28px; font-size: 14px;">Sign in to continue</p>
+                        <div style="margin-bottom: 12px;"><label style="font-size: 12px; color: #374151; display: block; margin-bottom: 5px;">Username</label><input type="text" placeholder="Enter username" style="width: 100%; padding: 10px 12px; border: 1px solid #D1D5DB; border-radius: 10px; font-size: 13px;"></div>
+                        <div style="margin-bottom: 16px;"><label style="font-size: 12px; color: #374151; display: block; margin-bottom: 5px;">Password</label><input type="password" placeholder="Enter password" style="width: 100%; padding: 10px 12px; border: 1px solid #D1D5DB; border-radius: 10px; font-size: 13px;"></div>
+                        <button style="width: 100%; padding: 12px; background: #2563EB; color: white; border: none; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer;">Sign In</button>
+                        <!-- Divider -->
+                        <div style="display: flex; align-items: center; margin: 16px 0;">
+                            <div style="flex: 1; height: 1px; background: #E5E7EB;"></div>
+                            <span style="padding: 0 12px; color: #9CA3AF; font-size: 12px;">Or continue with</span>
+                            <div style="flex: 1; height: 1px; background: #E5E7EB;"></div>
+                        </div>
+                        <!-- Google Sign In Button -->
+                        <button style="width: 100%; padding: 12px; background: white; color: #374151; border: 1px solid #D1D5DB; border-radius: 10px; font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px;">
+                            <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+                            Sign in with Google
+                        </button>
+                        <p style="text-align: center; color: #9CA3AF; font-size: 10px; margin-top: 16px;">© 2025-26 Bhikan Deshmukh</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Screen 1: Attendance -->
+            <div class="phone-frame" data-title="Attendance" data-desc="Check in/out with location">
+                <div class="status-bar"><span>9:41</span><span>📶 🔋</span></div>
+                <div class="top-bar"><h1>Attendance Tracker</h1><div class="top-bar-icons"><span class="material-icons">notifications</span><span class="material-icons">logout</span></div></div>
+                <div class="content">
+                    <div style="background: white; border-radius: 14px; padding: 18px; margin-bottom: 14px; box-shadow: 0 2px 8px rgba(0,0,0,0.06);">
+                        <h3 style="font-size: 15px; color: #111827; margin-bottom: 16px;">Mark Your Attendance</h3>
+                        <div style="display: flex; gap: 10px;">
+                            <button style="flex: 1; padding: 14px; background: linear-gradient(135deg, #16A34A, #15803D); color: white; border: none; border-radius: 10px; font-size: 13px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;"><span class="material-icons" style="font-size: 18px;">login</span> Check In</button>
+                            <button style="flex: 1; padding: 14px; background: #D1D5DB; color: white; border: none; border-radius: 10px; font-size: 13px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;"><span class="material-icons" style="font-size: 18px;">logout</span> Check Out</button>
+                        </div>
+                    </div>
+                    <div style="background: #ECFDF5; border-radius: 14px; padding: 18px; margin-bottom: 14px; text-align: center;">
+                        <p style="color: #059669; font-size: 13px; margin-bottom: 6px;">💰 Today's Earning</p>
+                        <h2 style="color: #059669; font-size: 28px; font-weight: 700;">₹1,250</h2>
+                        <p style="color: #6B7280; font-size: 11px; margin-top: 4px;">Working: 4h 30m</p>
+                    </div>
+                    <div style="background: white; border-radius: 14px; padding: 18px; box-shadow: 0 2px 8px rgba(0,0,0,0.06);">
+                        <h3 style="font-size: 15px; color: #111827; margin-bottom: 14px;">📅 Today's Status</h3>
+                        <div style="display: flex; justify-content: space-between; text-align: center;">
+                            <div><span class="material-icons" style="color: #6B7280; font-size: 18px;">calendar_today</span><p style="font-size: 9px; color: #9CA3AF; margin: 3px 0;">Date</p><p style="font-size: 13px; font-weight: 500;">2025-12-16</p></div>
+                            <div><span class="material-icons" style="color: #6B7280; font-size: 18px;">login</span><p style="font-size: 9px; color: #9CA3AF; margin: 3px 0;">Check In</p><p style="font-size: 13px; font-weight: 500;">09:00 AM</p></div>
+                            <div><span class="material-icons" style="color: #6B7280; font-size: 18px;">logout</span><p style="font-size: 9px; color: #9CA3AF; margin: 3px 0;">Check Out</p><p style="font-size: 13px; font-weight: 500;">--:--</p></div>
+                        </div>
+                        <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid #E5E7EB; display: flex; align-items: center; gap: 4px;">
+                            <span class="material-icons" style="color: #6B7280; font-size: 14px;">location_on</span>
+                            <span style="font-size: 11px; color: #6B7280;">21.1702, 72.8311</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="bottom-nav">
+                    <div class="nav-item active"><span class="material-icons">check_circle</span><span>Attendance</span></div>
+                    <div class="nav-item"><span class="material-icons">nights_stay</span><span>Night Duty</span></div>
+                    <div class="nav-item"><span class="material-icons">beach_access</span><span>Leaves</span></div>
+                    <div class="nav-item"><span class="material-icons">assessment</span><span>Reports</span></div>
+                    <div class="nav-item"><span class="material-icons">notifications</span><span>Alerts</span></div>
+                </div>
+            </div>
+
+            <!-- Screen 2: Leaves -->
+            <div class="phone-frame" data-title="Leave Management" data-desc="Apply & manage leaves">
+                <div class="status-bar"><span>9:41</span><span>📶 🔋</span></div>
+                <div class="top-bar"><h1>Attendance Tracker</h1><div class="top-bar-icons"><span class="material-icons">notifications</span><span class="material-icons">logout</span></div></div>
+                <div class="content">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+                        <h2 style="font-size: 18px; font-weight: 700;">🏖️ Leave Management</h2>
+                        <button style="padding: 8px 14px; background: #2563EB; color: white; border: none; border-radius: 10px; font-size: 13px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 4px;"><span class="material-icons" style="font-size: 16px;">add</span> Apply</button>
+                    </div>
+                    <div style="background: white; border-radius: 10px; padding: 14px; margin-bottom: 10px; box-shadow: 0 2px 6px rgba(0,0,0,0.06);">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;">
+                            <div><h4 style="font-size: 14px; font-weight: 600; color: #111827;">Rahul Sharma</h4><p style="font-size: 11px; color: #6B7280;">Sick Leave</p></div>
+                            <span style="background: #FEF3C7; color: #CA8A04; padding: 3px 10px; border-radius: 16px; font-size: 10px; font-weight: 600;">PENDING</span>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 4px; margin-bottom: 6px;"><span class="material-icons" style="font-size: 14px; color: #6B7280;">calendar_today</span><span style="font-size: 12px; color: #374151;">2025-12-18 - 2025-12-20</span></div>
+                        <p style="font-size: 12px; color: #6B7280; margin-bottom: 10px;">Not feeling well, need rest</p>
+                        <div style="border-top: 1px solid #E5E7EB; padding-top: 10px; display: flex; justify-content: flex-end; gap: 6px;">
+                            <button style="padding: 6px 12px; background: white; color: #DC2626; border: 1px solid #DC2626; border-radius: 6px; font-size: 12px; cursor: pointer;">Reject</button>
+                            <button style="padding: 6px 12px; background: #16A34A; color: white; border: none; border-radius: 6px; font-size: 12px; cursor: pointer;">Approve</button>
+                        </div>
+                    </div>
+                    <div style="background: white; border-radius: 10px; padding: 14px; margin-bottom: 10px; box-shadow: 0 2px 6px rgba(0,0,0,0.06);">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;">
+                            <div><h4 style="font-size: 14px; font-weight: 600; color: #111827;">Priya Patel</h4><p style="font-size: 11px; color: #6B7280;">Casual Leave</p></div>
+                            <span style="background: #DCFCE7; color: #16A34A; padding: 3px 10px; border-radius: 16px; font-size: 10px; font-weight: 600;">APPROVED</span>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 4px; margin-bottom: 6px;"><span class="material-icons" style="font-size: 14px; color: #6B7280;">calendar_today</span><span style="font-size: 12px; color: #374151;">2025-12-15</span></div>
+                        <p style="font-size: 12px; color: #6B7280;">Family function</p>
+                        <p style="font-size: 10px; color: #9CA3AF; margin-top: 6px;">By: Admin on 2025-12-14</p>
+                    </div>
+                    <div style="background: white; border-radius: 10px; padding: 14px; box-shadow: 0 2px 6px rgba(0,0,0,0.06);">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                            <div><h4 style="font-size: 14px; font-weight: 600; color: #111827;">Amit Kumar</h4><p style="font-size: 11px; color: #6B7280;">Earned Leave</p></div>
+                            <span style="background: #FEE2E2; color: #DC2626; padding: 3px 10px; border-radius: 16px; font-size: 10px; font-weight: 600;">REJECTED</span>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 4px; margin-top: 8px;"><span class="material-icons" style="font-size: 14px; color: #6B7280;">calendar_today</span><span style="font-size: 12px; color: #374151;">2025-12-10 - 2025-12-12</span></div>
+                    </div>
+                </div>
+                <div class="bottom-nav">
+                    <div class="nav-item"><span class="material-icons">check_circle</span><span>Attendance</span></div>
+                    <div class="nav-item"><span class="material-icons">nights_stay</span><span>Night Duty</span></div>
+                    <div class="nav-item active"><span class="material-icons">beach_access</span><span>Leaves</span></div>
+                    <div class="nav-item"><span class="material-icons">assessment</span><span>Reports</span></div>
+                    <div class="nav-item"><span class="material-icons">notifications</span><span>Alerts</span></div>
+                </div>
+            </div>
+
+            <!-- Screen 3: Night Duty -->
+            <div class="phone-frame" data-title="Night Duty" data-desc="Request night shifts">
+                <div class="status-bar"><span>9:41</span><span>📶 🔋</span></div>
+                <div class="top-bar"><h1>Attendance Tracker</h1><div class="top-bar-icons"><span class="material-icons">notifications</span><span class="material-icons">logout</span></div></div>
+                <div class="content">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+                        <h2 style="font-size: 18px; font-weight: 700;">🌙 Night Duty</h2>
+                        <button style="padding: 8px 14px; background: #2563EB; color: white; border: none; border-radius: 10px; font-size: 13px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 4px;"><span class="material-icons" style="font-size: 16px;">add</span> Request</button>
+                    </div>
+                    <div style="background: white; border-radius: 10px; padding: 14px; margin-bottom: 10px; box-shadow: 0 2px 6px rgba(0,0,0,0.06);">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px;">
+                            <div><h4 style="font-size: 14px; font-weight: 600; color: #111827;">Rahul Sharma</h4><div style="display: flex; align-items: center; gap: 4px; margin-top: 3px;"><span class="material-icons" style="font-size: 12px; color: #6B7280;">calendar_today</span><span style="font-size: 11px; color: #6B7280;">2025-12-17</span></div></div>
+                            <span style="background: #FEF3C7; color: #CA8A04; padding: 3px 10px; border-radius: 16px; font-size: 10px; font-weight: 600;">PENDING</span>
+                        </div>
+                        <p style="font-size: 12px; color: #6B7280; margin: 6px 0 10px;">Server maintenance work</p>
+                        <div style="border-top: 1px solid #E5E7EB; padding-top: 10px; display: flex; justify-content: flex-end; gap: 6px;">
+                            <button style="padding: 6px 12px; background: white; color: #DC2626; border: 1px solid #DC2626; border-radius: 6px; font-size: 12px; cursor: pointer;">Reject</button>
+                            <button style="padding: 6px 12px; background: #16A34A; color: white; border: none; border-radius: 6px; font-size: 12px; cursor: pointer;">Approve</button>
+                        </div>
+                    </div>
+                    <div style="background: white; border-radius: 10px; padding: 14px; margin-bottom: 10px; box-shadow: 0 2px 6px rgba(0,0,0,0.06);">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                            <div><h4 style="font-size: 14px; font-weight: 600; color: #111827;">Priya Patel</h4><div style="display: flex; align-items: center; gap: 4px; margin-top: 3px;"><span class="material-icons" style="font-size: 12px; color: #6B7280;">calendar_today</span><span style="font-size: 11px; color: #6B7280;">2025-12-16</span></div></div>
+                            <span style="background: #DCFCE7; color: #16A34A; padding: 3px 10px; border-radius: 16px; font-size: 10px; font-weight: 600;">APPROVED</span>
+                        </div>
+                        <p style="font-size: 12px; color: #6B7280; margin-top: 6px;">Client demo preparation</p>
+                    </div>
+                    <div style="background: white; border-radius: 10px; padding: 14px; box-shadow: 0 2px 6px rgba(0,0,0,0.06);">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                            <div><h4 style="font-size: 14px; font-weight: 600; color: #111827;">Amit Kumar</h4><div style="display: flex; align-items: center; gap: 4px; margin-top: 3px;"><span class="material-icons" style="font-size: 12px; color: #6B7280;">calendar_today</span><span style="font-size: 11px; color: #6B7280;">2025-12-14</span></div></div>
+                            <span style="background: #FEE2E2; color: #DC2626; padding: 3px 10px; border-radius: 16px; font-size: 10px; font-weight: 600;">REJECTED</span>
+                        </div>
+                        <p style="font-size: 12px; color: #6B7280; margin-top: 6px;">Personal work</p>
+                    </div>
+                </div>
+                <div class="bottom-nav">
+                    <div class="nav-item"><span class="material-icons">check_circle</span><span>Attendance</span></div>
+                    <div class="nav-item active"><span class="material-icons">nights_stay</span><span>Night Duty</span></div>
+                    <div class="nav-item"><span class="material-icons">beach_access</span><span>Leaves</span></div>
+                    <div class="nav-item"><span class="material-icons">assessment</span><span>Reports</span></div>
+                    <div class="nav-item"><span class="material-icons">notifications</span><span>Alerts</span></div>
+                </div>
+            </div>
+
+            <!-- Screen 4: Reports -->
+            <div class="phone-frame" data-title="Reports" data-desc="Monthly summary & history">
+                <div class="status-bar"><span>9:41</span><span>📶 🔋</span></div>
+                <div class="top-bar"><h1>Attendance Tracker</h1><div class="top-bar-icons"><span class="material-icons">notifications</span><span class="material-icons">logout</span></div></div>
+                <div class="content">
+                    <h2 style="font-size: 18px; font-weight: 700; margin-bottom: 14px;">📊 My Reports</h2>
+                    <div style="background: white; border-radius: 14px; padding: 18px; margin-bottom: 14px; box-shadow: 0 2px 6px rgba(0,0,0,0.06);">
+                        <h3 style="font-size: 14px; font-weight: 600; color: #111827; margin-bottom: 14px;">Monthly Summary</h3>
+                        <div style="display: flex; justify-content: space-around; text-align: center;">
+                            <div><span class="material-icons" style="color: #2563EB; font-size: 22px;">calendar_month</span><h4 style="font-size: 22px; font-weight: 700; margin: 3px 0;">30</h4><p style="font-size: 10px; color: #6B7280;">Total Days</p></div>
+                            <div><span class="material-icons" style="color: #2563EB; font-size: 22px;">check_circle</span><h4 style="font-size: 22px; font-weight: 700; margin: 3px 0;">24</h4><p style="font-size: 10px; color: #6B7280;">Present</p></div>
+                            <div><span class="material-icons" style="color: #2563EB; font-size: 22px;">schedule</span><h4 style="font-size: 22px; font-weight: 700; margin: 3px 0;">192h</h4><p style="font-size: 10px; color: #6B7280;">Total Hours</p></div>
+                        </div>
+                        <div style="border-top: 1px solid #E5E7EB; margin-top: 14px; padding-top: 14px; text-align: center;">
+                            <span style="font-size: 14px;">💰 Total Earning: </span>
+                            <span style="font-size: 20px; font-weight: 700; color: #16A34A;">₹28,500</span>
+                        </div>
+                    </div>
+                    <h3 style="font-size: 14px; font-weight: 600; margin-bottom: 10px;">Attendance History</h3>
+                    <div style="background: white; border-radius: 8px; padding: 10px 14px; margin-bottom: 6px; display: flex; justify-content: space-between; align-items: center;">
+                        <div><p style="font-size: 13px; font-weight: 500;">2025-12-16</p><p style="font-size: 11px; color: #6B7280;">09:00 AM - 06:30 PM</p></div>
+                        <div style="text-align: right;"><p style="font-size: 13px; font-weight: 600; color: #16A34A;">9h 30m</p></div>
+                    </div>
+                    <div style="background: white; border-radius: 8px; padding: 10px 14px; margin-bottom: 6px; display: flex; justify-content: space-between; align-items: center;">
+                        <div><p style="font-size: 13px; font-weight: 500;">2025-12-15</p><p style="font-size: 11px; color: #6B7280;">09:15 AM - 06:00 PM</p></div>
+                        <div style="text-align: right;"><p style="font-size: 13px; font-weight: 600; color: #16A34A;">8h 45m</p></div>
+                    </div>
+                    <div style="background: white; border-radius: 8px; padding: 10px 14px; margin-bottom: 6px; display: flex; justify-content: space-between; align-items: center;">
+                        <div><p style="font-size: 13px; font-weight: 500;">2025-12-14</p><p style="font-size: 11px; color: #6B7280;">09:00 PM - 07:00 AM</p></div>
+                        <div style="text-align: right;"><p style="font-size: 13px; font-weight: 600; color: #16A34A;">10h 00m</p><p style="font-size: 10px;">🌙 Night</p></div>
+                    </div>
+                </div>
+                <div class="bottom-nav">
+                    <div class="nav-item"><span class="material-icons">check_circle</span><span>Attendance</span></div>
+                    <div class="nav-item"><span class="material-icons">nights_stay</span><span>Night Duty</span></div>
+                    <div class="nav-item"><span class="material-icons">beach_access</span><span>Leaves</span></div>
+                    <div class="nav-item active"><span class="material-icons">assessment</span><span>Reports</span></div>
+                    <div class="nav-item"><span class="material-icons">notifications</span><span>Alerts</span></div>
+                </div>
+            </div>
+
+            <!-- Screen 5: Notifications -->
+            <div class="phone-frame" data-title="Notifications" data-desc="Alerts & updates">
+                <div class="status-bar"><span>9:41</span><span>📶 🔋</span></div>
+                <div class="top-bar"><h1>Attendance Tracker</h1><div class="top-bar-icons"><span class="material-icons">notifications</span><span class="material-icons">logout</span></div></div>
+                <div class="content">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+                        <h2 style="font-size: 18px; font-weight: 700;">🔔 Notifications</h2>
+                        <button style="padding: 6px 10px; background: transparent; color: #2563EB; border: none; font-size: 12px; cursor: pointer;">Mark all read</button>
+                    </div>
+                    <div style="background: #EFF6FF; border-radius: 10px; padding: 14px; margin-bottom: 8px; display: flex; gap: 10px;">
+                        <div style="width: 36px; height: 36px; background: #F3F4F6; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0;">✅</div>
+                        <div style="flex: 1; min-width: 0;">
+                            <div style="display: flex; justify-content: space-between; align-items: center;"><h4 style="font-size: 13px; font-weight: 600;">Leave Approved</h4><div style="width: 7px; height: 7px; background: #2563EB; border-radius: 50%;"></div></div>
+                            <p style="font-size: 12px; color: #6B7280; margin: 3px 0;">Your sick leave request has been approved</p>
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 6px;"><span style="font-size: 10px; color: #9CA3AF;">2h ago</span><div style="display: flex; gap: 6px;"><button style="background: none; border: none; color: #2563EB; font-size: 11px; cursor: pointer;">Mark read</button><span class="material-icons" style="font-size: 16px; color: #DC2626; cursor: pointer;">delete</span></div></div>
+                        </div>
+                    </div>
+                    <div style="background: #EFF6FF; border-radius: 10px; padding: 14px; margin-bottom: 8px; display: flex; gap: 10px;">
+                        <div style="width: 36px; height: 36px; background: #F3F4F6; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0;">🌙</div>
+                        <div style="flex: 1; min-width: 0;">
+                            <div style="display: flex; justify-content: space-between; align-items: center;"><h4 style="font-size: 13px; font-weight: 600;">Night Duty Approved</h4><div style="width: 7px; height: 7px; background: #2563EB; border-radius: 50%;"></div></div>
+                            <p style="font-size: 12px; color: #6B7280; margin: 3px 0;">Your night duty request for Dec 17 approved</p>
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 6px;"><span style="font-size: 10px; color: #9CA3AF;">5h ago</span><div style="display: flex; gap: 6px;"><button style="background: none; border: none; color: #2563EB; font-size: 11px; cursor: pointer;">Mark read</button><span class="material-icons" style="font-size: 16px; color: #DC2626; cursor: pointer;">delete</span></div></div>
+                        </div>
+                    </div>
+                    <div style="background: white; border-radius: 10px; padding: 14px; margin-bottom: 8px; display: flex; gap: 10px;">
+                        <div style="width: 36px; height: 36px; background: #F3F4F6; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0;">📋</div>
+                        <div style="flex: 1; min-width: 0;">
+                            <h4 style="font-size: 13px; font-weight: 400;">Attendance Modified</h4>
+                            <p style="font-size: 12px; color: #6B7280; margin: 3px 0;">Admin updated your attendance for Dec 14</p>
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 6px;"><span style="font-size: 10px; color: #9CA3AF;">2d ago</span><span class="material-icons" style="font-size: 16px; color: #DC2626; cursor: pointer;">delete</span></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="bottom-nav">
+                    <div class="nav-item"><span class="material-icons">check_circle</span><span>Attendance</span></div>
+                    <div class="nav-item"><span class="material-icons">nights_stay</span><span>Night Duty</span></div>
+                    <div class="nav-item"><span class="material-icons">beach_access</span><span>Leaves</span></div>
+                    <div class="nav-item"><span class="material-icons">assessment</span><span>Reports</span></div>
+                    <div class="nav-item active"><span class="material-icons">notifications</span><span>Alerts</span></div>
+                </div>
+            </div>
+
+            <!-- Screen 6: Employees (Admin) -->
+            <div class="phone-frame" data-title="Employees" data-desc="Admin - Manage employees">
+                <div class="status-bar"><span>9:41</span><span>📶 🔋</span></div>
+                <div class="top-bar"><h1>Attendance Tracker</h1><div class="top-bar-icons"><span class="material-icons">notifications</span><span class="material-icons">logout</span></div></div>
+                <div class="content">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+                        <h2 style="font-size: 18px; font-weight: 700;">👥 Employees</h2>
+                        <button style="padding: 8px 14px; background: #2563EB; color: white; border: none; border-radius: 10px; font-size: 13px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 4px;"><span class="material-icons" style="font-size: 16px;">add</span> Add</button>
+                    </div>
+                    <div style="position: relative; margin-bottom: 14px;">
+                        <span class="material-icons" style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: #9CA3AF; font-size: 20px;">search</span>
+                        <input type="text" placeholder="Search employees..." style="width: 100%; padding: 10px 10px 10px 38px; border: 1px solid #D1D5DB; border-radius: 10px; font-size: 13px;">
+                    </div>
+                    <div style="background: white; border-radius: 10px; padding: 14px; margin-bottom: 10px; box-shadow: 0 2px 6px rgba(0,0,0,0.06); display: flex; align-items: center; gap: 10px;">
+                        <div style="width: 44px; height: 44px; background: #2563EB; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 14px; flex-shrink: 0;">RS</div>
+                        <div style="flex: 1; min-width: 0;">
+                            <h4 style="font-size: 14px; font-weight: 600;">Rahul Sharma</h4>
+                            <p style="font-size: 11px; color: #6B7280;">Software Developer</p>
+                            <div style="display: flex; gap: 6px; margin-top: 3px;">
+                                <span style="background: #EFF6FF; color: #2563EB; padding: 2px 5px; border-radius: 3px; font-size: 9px; font-weight: 600;">USER</span>
+                                <span style="background: #DCFCE7; color: #16A34A; padding: 2px 5px; border-radius: 3px; font-size: 9px; font-weight: 600;">ACTIVE</span>
+                            </div>
+                        </div>
+                        <div style="display: flex; gap: 2px;"><span class="material-icons" style="color: #2563EB; cursor: pointer; font-size: 20px;">edit</span><span class="material-icons" style="color: #DC2626; cursor: pointer; font-size: 20px;">delete</span></div>
+                    </div>
+                    <div style="background: white; border-radius: 10px; padding: 14px; margin-bottom: 10px; box-shadow: 0 2px 6px rgba(0,0,0,0.06); display: flex; align-items: center; gap: 10px;">
+                        <div style="width: 44px; height: 44px; background: #2563EB; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 14px; flex-shrink: 0;">PP</div>
+                        <div style="flex: 1; min-width: 0;">
+                            <h4 style="font-size: 14px; font-weight: 600;">Priya Patel</h4>
+                            <p style="font-size: 11px; color: #6B7280;">UI Designer</p>
+                            <div style="display: flex; gap: 6px; margin-top: 3px;">
+                                <span style="background: #EFF6FF; color: #2563EB; padding: 2px 5px; border-radius: 3px; font-size: 9px; font-weight: 600;">USER</span>
+                                <span style="background: #DCFCE7; color: #16A34A; padding: 2px 5px; border-radius: 3px; font-size: 9px; font-weight: 600;">ACTIVE</span>
+                            </div>
+                        </div>
+                        <div style="display: flex; gap: 2px;"><span class="material-icons" style="color: #2563EB; cursor: pointer; font-size: 20px;">edit</span><span class="material-icons" style="color: #DC2626; cursor: pointer; font-size: 20px;">delete</span></div>
+                    </div>
+                    <div style="background: white; border-radius: 10px; padding: 14px; box-shadow: 0 2px 6px rgba(0,0,0,0.06); display: flex; align-items: center; gap: 10px;">
+                        <div style="width: 44px; height: 44px; background: #2563EB; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 14px; flex-shrink: 0;">BD</div>
+                        <div style="flex: 1; min-width: 0;">
+                            <h4 style="font-size: 14px; font-weight: 600;">Bhikan Deshmukh</h4>
+                            <p style="font-size: 11px; color: #6B7280;">Administrator</p>
+                            <div style="display: flex; gap: 6px; margin-top: 3px;">
+                                <span style="background: #DCFCE7; color: #16A34A; padding: 2px 5px; border-radius: 3px; font-size: 9px; font-weight: 600;">ADMIN</span>
+                                <span style="background: #DCFCE7; color: #16A34A; padding: 2px 5px; border-radius: 3px; font-size: 9px; font-weight: 600;">ACTIVE</span>
+                            </div>
+                        </div>
+                        <div style="display: flex; gap: 2px;"><span class="material-icons" style="color: #2563EB; cursor: pointer; font-size: 20px;">edit</span><span class="material-icons" style="color: #DC2626; cursor: pointer; font-size: 20px;">delete</span></div>
+                    </div>
+                </div>
+                <div class="bottom-nav">
+                    <div class="nav-item"><span class="material-icons">check_circle</span><span>Attendance</span></div>
+                    <div class="nav-item"><span class="material-icons">nights_stay</span><span>Night Duty</span></div>
+                    <div class="nav-item"><span class="material-icons">beach_access</span><span>Leaves</span></div>
+                    <div class="nav-item active"><span class="material-icons">people</span><span>Employees</span></div>
+                    <div class="nav-item"><span class="material-icons">notifications</span><span>Alerts</span></div>
+                </div>
+            </div>
+
+            <div class="screen-counter">
+                <span id="counterText">1 / 7</span>
+                <div class="dots">
+                    <div class="dot active" onclick="showScreen(0)"></div>
+                    <div class="dot" onclick="showScreen(1)"></div>
+                    <div class="dot" onclick="showScreen(2)"></div>
+                    <div class="dot" onclick="showScreen(3)"></div>
+                    <div class="dot" onclick="showScreen(4)"></div>
+                    <div class="dot" onclick="showScreen(5)"></div>
+                    <div class="dot" onclick="showScreen(6)"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentScreen = 0;
+        const totalScreens = 7;
+        const screens = document.querySelectorAll('.phone-frame');
+        const dots = document.querySelectorAll('.dot');
+
+        function showScreen(index) {
+            currentScreen = index;
+            screens.forEach((s, i) => s.classList.toggle('active', i === index));
+            dots.forEach((d, i) => d.classList.toggle('active', i === index));
+            document.getElementById('counterText').textContent = `${index + 1} / ${totalScreens}`;
+        }
+
+        function nextScreen() { showScreen((currentScreen + 1) % totalScreens); }
+        function prevScreen() { showScreen((currentScreen - 1 + totalScreens) % totalScreens); }
+
+        // Keyboard navigation
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight') nextScreen();
+            if (e.key === 'ArrowLeft') prevScreen();
+        });
+
+        // Touch swipe support
+        let touchStartX = 0;
+        document.addEventListener('touchstart', (e) => { touchStartX = e.touches[0].clientX; });
+        document.addEventListener('touchend', (e) => {
+            const diff = touchStartX - e.changedTouches[0].clientX;
+            if (Math.abs(diff) > 50) { diff > 0 ? nextScreen() : prevScreen(); }
+        });
+    </script>
+</body>
+</html>

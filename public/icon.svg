@@ -1,0 +1,18 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="512" height="512" rx="100" fill="#2563eb"/>
+  
+  <!-- Clipboard -->
+  <rect x="140" y="100" width="232" height="312" rx="16" fill="white"/>
+  <rect x="180" y="80" width="152" height="40" rx="8" fill="#60a5fa"/>
+  
+  <!-- Checkmarks -->
+  <path d="M180 180 L200 200 L240 160" stroke="#22c55e" stroke-width="12" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  <path d="M180 250 L200 270 L240 230" stroke="#22c55e" stroke-width="12" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  <path d="M180 320 L200 340 L240 300" stroke="#22c55e" stroke-width="12" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  
+  <!-- Lines -->
+  <line x1="270" y1="185" x2="340" y2="185" stroke="#94a3b8" stroke-width="8" stroke-linecap="round"/>
+  <line x1="270" y1="255" x2="340" y2="255" stroke="#94a3b8" stroke-width="8" stroke-linecap="round"/>
+  <line x1="270" y1="325" x2="340" y2="325" stroke="#94a3b8" stroke-width="8" stroke-linecap="round"/>
+</svg>

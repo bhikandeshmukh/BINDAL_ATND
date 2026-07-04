@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "861215517427",
+    "firebase_url": "https://atdn-ec598-default-rtdb.asia-southeast1.firebasedatabase.app",
+    "project_id": "atdn-ec598",
+    "storage_bucket": "atdn-ec598.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:861215517427:android:7179c3e667fb456f3fa586",
+        "android_client_info": {
+          "package_name": "com.attendance.tracker"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "861215517427-63vg3pj14c421gf042ftu6b6r5pibrra.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD8vFKki7BuMFntERF867ApaVpcoYLvGvg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "861215517427-3i1du265p8gqi9aivdkjstr18hnl70t7.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
