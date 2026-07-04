@@ -60,7 +60,7 @@ class AttendanceViewModel @Inject constructor(
     private val timeFormat = SimpleDateFormat("hh:mm:ss a", Locale.getDefault())
     
     fun initialize(name: String, role: UserRole) {
-        userName = name
+        userName = name.trim()
         userRole = role
         
         val today = dateFormat.format(Date())

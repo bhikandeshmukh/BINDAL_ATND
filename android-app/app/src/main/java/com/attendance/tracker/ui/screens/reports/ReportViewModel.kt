@@ -56,7 +56,7 @@ class ReportViewModel @Inject constructor(
     private val calendar = Calendar.getInstance()
     
     fun initialize(name: String, role: UserRole) {
-        userName = name
+        userName = name.trim()
         userRole = role
         
         // Set current month/year

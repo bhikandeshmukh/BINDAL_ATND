@@ -30,7 +30,7 @@ class LeaveViewModel @Inject constructor(
     private var userRole: UserRole = UserRole.USER
     
     fun initialize(name: String, role: UserRole) {
-        userName = name
+        userName = name.trim()
         userRole = role
         loadLeaves()
     }

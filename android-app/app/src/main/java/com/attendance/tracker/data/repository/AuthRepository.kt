@@ -83,14 +83,18 @@ class AuthRepository @Inject constructor(
             }
             
             // Extract user data from numbered fields
+            val rawUsername = employeeDoc.getString(FirebaseConfig.EmployeeFields.USERNAME) 
+                ?: employeeDoc.getString(FirebaseConfig.EmployeeFields.NAME) ?: username
+            val rawName = employeeDoc.getString(FirebaseConfig.EmployeeFields.NAME) 
+                ?: employeeDoc.getString(FirebaseConfig.EmployeeFields.USERNAME) ?: ""
+            val rawEmail = employeeDoc.getString(FirebaseConfig.EmployeeFields.EMAIL) ?: ""
+
             val user = User(
-                id = employeeDoc.getString(FirebaseConfig.EmployeeFields.ID) ?: employeeDoc.id,
-                username = employeeDoc.getString(FirebaseConfig.EmployeeFields.USERNAME) 
-                    ?: employeeDoc.getString(FirebaseConfig.EmployeeFields.NAME) ?: username,
-                name = employeeDoc.getString(FirebaseConfig.EmployeeFields.NAME) 
-                    ?: employeeDoc.getString(FirebaseConfig.EmployeeFields.USERNAME) ?: "",
+                id = (employeeDoc.getString(FirebaseConfig.EmployeeFields.ID) ?: employeeDoc.id).trim(),
+                username = rawUsername.trim(),
+                name = rawName.trim(),
                 role = parseUserRole(employeeDoc.getString(FirebaseConfig.EmployeeFields.ROLE)),
-                email = employeeDoc.getString(FirebaseConfig.EmployeeFields.EMAIL)
+                email = rawEmail.trim()
             )
             
             Log.d(TAG, "Login successful for: ${user.name}, role: ${user.role}")
@@ -160,11 +164,11 @@ class AuthRepository @Inject constructor(
                 .await()
 
             val user = User(
-                id = id,
-                username = username,
-                name = name,
+                id = id.trim(),
+                username = username.trim(),
+                name = name.trim(),
                 role = UserRole.USER,
-                email = email
+                email = email.trim()
             )
 
             saveUser(user, "firebase_token_${user.id}")
