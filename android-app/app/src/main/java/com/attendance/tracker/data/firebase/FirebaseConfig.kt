@@ -1,9 +1,9 @@
 package com.attendance.tracker.data.firebase
 
 object FirebaseConfig {
-    const val PROJECT_ID = "atdn-ec598"
-    const val DATABASE_URL = "https://atdn-ec598-default-rtdb.asia-southeast1.firebasedatabase.app"
-    const val STORAGE_BUCKET = "atdn-ec598.firebasestorage.app"
+    const val PROJECT_ID = "bindal-atnd"
+    const val DATABASE_URL = "https://bindal-atnd-default-rtdb.firebaseio.com"
+    const val STORAGE_BUCKET = "bindal-atnd.firebasestorage.app"
     
     // Collections (matching Next.js app structure)
     const val EMPLOYEES_COLLECTION = "employees"
