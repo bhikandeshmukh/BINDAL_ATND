@@ -297,14 +297,17 @@ fun AttendanceHistoryItem(
 ) {
     val parseTime = { timeStr: String ->
         try {
-            val parts = timeStr.split(" ")
-            val time = parts[0]
+            val cleanStr = timeStr.trim()
+            val parts = cleanStr.split(Regex("\\s+"))
+            val rawTime = parts[0]
             val period = if (parts.size > 1) parts[1] else "AM"
-            val timeParts = time.split(":")
+            val normalizedTime = rawTime.replace(".", ":")
+            val timeParts = normalizedTime.split(":")
             var hours = timeParts[0].toInt()
             val minutes = if (timeParts.size > 1) timeParts[1].toInt() else 0
-            if (period == "PM" && hours != 12) hours += 12
-            if (period == "AM" && hours == 12) hours = 0
+            val normalizedPeriod = period.uppercase(Locale.US)
+            if (normalizedPeriod == "PM" && hours != 12) hours += 12
+            if (normalizedPeriod == "AM" && hours == 12) hours = 0
             hours * 60 + minutes
         } catch (e: Exception) {
             10 * 60

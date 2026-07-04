@@ -285,13 +285,15 @@ export default function AttendanceForm({ onRecordAdded, userRole, userName }: At
     try {
       // Parse times
       const parseTime = (timeStr: string) => {
-        const [time, period] = timeStr.split(' ');
-        let [hours, minutes, seconds] = time.split(':').map(Number);
+        if (!timeStr) return 0;
+        const [time, period] = timeStr.trim().split(/\s+/);
+        const normalizedTime = time.replace(/\./g, ':');
+        let [hours, minutes] = normalizedTime.split(':').map(Number);
 
-        if (period === 'PM' && hours !== 12) hours += 12;
-        if (period === 'AM' && hours === 12) hours = 0;
+        if (period?.toUpperCase() === 'PM' && hours !== 12) hours += 12;
+        if (period?.toUpperCase() === 'AM' && hours === 12) hours = 0;
 
-        return hours * 60 + minutes;
+        return hours * 60 + (minutes || 0);
       };
 
       const inMinutes = parseTime(inTime);
