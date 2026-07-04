@@ -594,6 +594,8 @@ export default function AttendanceForm({ onRecordAdded, userRole, userName }: At
           checkInTime={formData.inTime}
           checkInDate={formData.date}
           fixedSalary={selectedEmployeeData.fixedSalary}
+          fixedInTime={selectedEmployeeData.fixedInTime}
+          fixedOutTime={selectedEmployeeData.fixedOutTime}
         />
       )}
 
