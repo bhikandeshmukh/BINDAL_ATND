@@ -23,6 +23,21 @@ interface LeaveRecord {
     approvedTime?: string;
 }
 
+const festiveHolidays = [
+    { name: "New Year's Day", date: "2026-01-01", day: "Thursday", status: "Paid" },
+    { name: "Republic Day", date: "2026-01-26", day: "Monday", status: "Paid" },
+    { name: "Maha Shivratri", date: "2026-02-15", day: "Sunday", status: "Paid" },
+    { name: "Holi", date: "2026-03-04", day: "Wednesday", status: "Paid" },
+    { name: "Eid al-Fitr", date: "2026-03-20", day: "Friday", status: "Paid" },
+    { name: "Good Friday", date: "2026-04-03", day: "Friday", status: "Paid" },
+    { name: "Independence Day", date: "2026-08-15", day: "Saturday", status: "Paid" },
+    { name: "Raksha Bandhan", date: "2026-08-28", day: "Friday", status: "Paid" },
+    { name: "Gandhi Jayanti", date: "2026-10-02", day: "Friday", status: "Paid" },
+    { name: "Dussehra", date: "2026-10-20", day: "Tuesday", status: "Paid" },
+    { name: "Diwali (Deepavali)", date: "2026-11-08", day: "Sunday", status: "Paid" },
+    { name: "Christmas Day", date: "2026-12-25", day: "Friday", status: "Paid" },
+];
+
 export default function LeaveManagement({ userRole, userName, adminName }: LeaveManagementProps) {
     const [employees, setEmployees] = useState<any[]>([]);
     const [leaves, setLeaves] = useState<LeaveRecord[]>([]);
@@ -198,6 +213,28 @@ export default function LeaveManagement({ userRole, userName, adminName }: Leave
             .filter((leave) => (leave.paymentStatus || (leave.leaveType === "unpaid" ? "unpaid" : "paid")) === "unpaid")
             .flatMap(getWorkingLeaveDays)
     );
+
+    const currentYear = new Date().getFullYear();
+    const userApprovedLeavesThisYear = leaves.filter(leave => {
+        if (leave.status !== "approved") return false;
+        if (userRole === "user" && leave.employeeName !== userName) return false;
+        try {
+            const year = new Date(leave.startDate).getFullYear();
+            return year === currentYear;
+        } catch(e) {
+            return false;
+        }
+    });
+
+    const calculateTotalDaysForLeaves = (filteredLeaves: LeaveRecord[]) => {
+        return filteredLeaves.reduce((sum, leave) => {
+            return sum + calculateDays(leave.startDate, leave.endDate);
+        }, 0);
+    };
+
+    const sickUsed = calculateTotalDaysForLeaves(userApprovedLeavesThisYear.filter(l => l.leaveType === "sick"));
+    const casualUsed = calculateTotalDaysForLeaves(userApprovedLeavesThisYear.filter(l => l.leaveType === "casual"));
+    const earnedUsed = calculateTotalDaysForLeaves(userApprovedLeavesThisYear.filter(l => l.leaveType === "earned"));
     const calendarMonth = new Date();
     const calendarYear = calendarMonth.getFullYear();
     const calendarMonthIndex = calendarMonth.getMonth();
@@ -228,6 +265,102 @@ export default function LeaveManagement({ userRole, userName, adminName }: Leave
                 >
                     {showForm ? "Cancel" : "+ Apply Leave"}
                 </button>
+            </div>
+
+            {/* Leave Summary & Festive Holidays Grid */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                {/* Leave Balances Card */}
+                <div className="bg-white rounded-xl shadow-md p-4 border border-slate-100">
+                    <h3 className="text-sm sm:text-base font-bold text-slate-800 mb-3 flex items-center gap-2">
+                        📊 Leave Balances ({currentYear})
+                    </h3>
+                    <div className="space-y-3.5">
+                        {/* Casual Leave */}
+                        <div>
+                            <div className="flex justify-between text-xs font-semibold mb-1">
+                                <span className="text-slate-600">Casual Leave (CL)</span>
+                                <span className="text-slate-800">{casualUsed} / 12 Days Used</span>
+                            </div>
+                            <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+                                <div 
+                                    className="bg-blue-500 h-full transition-all duration-500" 
+                                    style={{ width: `${Math.min(100, (casualUsed / 12) * 100)}%` }}
+                                ></div>
+                            </div>
+                            <span className="text-[10px] text-slate-400 font-medium">Remaining: {Math.max(0, 12 - casualUsed)} Days</span>
+                        </div>
+
+                        {/* Sick Leave */}
+                        <div>
+                            <div className="flex justify-between text-xs font-semibold mb-1">
+                                <span className="text-slate-600">Sick Leave (SL)</span>
+                                <span className="text-slate-800">{sickUsed} / 10 Days Used</span>
+                            </div>
+                            <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+                                <div 
+                                    className="bg-emerald-500 h-full transition-all duration-500" 
+                                    style={{ width: `${Math.min(100, (sickUsed / 10) * 100)}%` }}
+                                ></div>
+                            </div>
+                            <span className="text-[10px] text-slate-400 font-medium">Remaining: {Math.max(0, 10 - sickUsed)} Days</span>
+                        </div>
+
+                        {/* Earned Leave */}
+                        <div>
+                            <div className="flex justify-between text-xs font-semibold mb-1">
+                                <span className="text-slate-600">Earned Leave (EL)</span>
+                                <span className="text-slate-800">{earnedUsed} / 15 Days Used</span>
+                            </div>
+                            <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+                                <div 
+                                    className="bg-violet-500 h-full transition-all duration-500" 
+                                    style={{ width: `${Math.min(100, (earnedUsed / 15) * 100)}%` }}
+                                ></div>
+                            </div>
+                            <span className="text-[10px] text-slate-400 font-medium">Remaining: {Math.max(0, 15 - earnedUsed)} Days</span>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Festive Holidays Card */}
+                <div className="bg-white rounded-xl shadow-md p-4 border border-slate-100">
+                    <h3 className="text-sm sm:text-base font-bold text-slate-800 mb-3 flex items-center gap-2">
+                        🎉 Company Festive Holidays ({currentYear})
+                    </h3>
+                    <div className="max-h-[200px] overflow-y-auto pr-1 space-y-2 custom-scrollbar">
+                        {festiveHolidays.map((holiday, index) => {
+                            // Split year, month, day to construct Date safely avoiding local timezone shifts
+                            const [y, m, d] = holiday.date.split("-").map(Number);
+                            const holidayDate = new Date(y, m - 1, d);
+                            
+                            // Get today's date at midnight for fair comparison
+                            const today = new Date();
+                            today.setHours(0,0,0,0);
+                            const isPast = holidayDate < today;
+                            
+                            return (
+                                <div 
+                                    key={index} 
+                                    className={`flex items-center justify-between p-2 rounded-lg border text-xs transition-all ${
+                                        isPast 
+                                            ? 'bg-slate-50/50 border-slate-100 text-slate-400 line-through' 
+                                            : 'bg-gradient-to-r from-blue-50/20 to-indigo-50/10 border-blue-100 text-slate-700 hover:border-blue-200'
+                                    }`}
+                                >
+                                    <div>
+                                        <p className="font-extrabold">{holiday.name}</p>
+                                        <p className="text-[10px] text-slate-400 font-medium">{holiday.date} • {holiday.day}</p>
+                                    </div>
+                                    <span className={`px-2 py-0.5 rounded text-[9px] font-extrabold uppercase ${
+                                        isPast ? 'bg-slate-100 text-slate-400' : 'bg-blue-100 text-blue-800'
+                                    }`}>
+                                        {holiday.status}
+                                    </span>
+                                </div>
+                            );
+                        })}
+                    </div>
+                </div>
             </div>
 
             {showForm && (
