@@ -20,7 +20,7 @@ export async function GET(
         const startDate = searchParams.get("startDate") || undefined;
         const endDate = searchParams.get("endDate") || undefined;
 
-        const logs = await getEmployeeAuditLogs(undefined, employeeId, startDate, endDate);
+        const logs = await getEmployeeAuditLogs(employeeId, startDate, endDate);
 
         return NextResponse.json({
             logs,
