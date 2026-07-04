@@ -13,5 +13,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "AttendanceTracker"
+rootProject.name = "BindalPunching"
 include(":app")
