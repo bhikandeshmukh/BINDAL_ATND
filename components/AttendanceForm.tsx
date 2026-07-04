@@ -645,6 +645,22 @@ export default function AttendanceForm({ onRecordAdded, userRole, userName }: At
           )}
         </div>
 
+        {selectedEmployeeData && (
+          <div className="md:col-span-2 bg-gradient-to-r from-slate-50 to-blue-50/30 border border-slate-200/80 rounded-xl p-3 shadow-sm flex items-center justify-between text-xs sm:text-sm">
+            <div className="flex items-center gap-2">
+              <span className="text-xl">💰</span>
+              <div>
+                <p className="font-bold text-slate-800">Fixed Monthly Salary</p>
+                <p className="text-[11px] text-slate-500">Shift: {selectedEmployeeData.fixedInTime} - {selectedEmployeeData.fixedOutTime}</p>
+              </div>
+            </div>
+            <div className="text-right">
+              <p className="font-extrabold text-blue-700 text-sm sm:text-base">₹{Number(selectedEmployeeData.fixedSalary).toLocaleString('en-IN')}/mo</p>
+              <p className="text-[10px] text-slate-400">Fixed Day Pay Model</p>
+            </div>
+          </div>
+        )}
+
         {/* Check In Section */}
         <div className="md:col-span-2">
           <div className="bg-white border-2 border-gray-200 rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow">

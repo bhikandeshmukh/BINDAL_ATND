@@ -153,7 +153,7 @@ fun ReportScreen(
                 if (uiState.perMinuteRate > 0) {
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = if (isEarningVisible) "Rate: ₹${String.format("%.2f", uiState.perMinuteRate)}/min" else "Rate: ₹ ••••/min",
+                        text = if (isEarningVisible) "Rate: ₹${String.format("%.2f", uiState.perMinuteRate)}/day" else "Rate: ₹ ••••/day",
                         style = MaterialTheme.typography.bodySmall,
                         color = Color.Gray,
                         modifier = Modifier.align(Alignment.CenterHorizontally)
@@ -200,7 +200,9 @@ fun ReportScreen(
                 items(uiState.records) { record ->
                     AttendanceHistoryItem(
                         record = record,
-                        perMinuteRate = uiState.perMinuteRate,
+                        dailyRate = uiState.perMinuteRate,
+                        fixedInTime = viewModel.fixedInTime,
+                        fixedOutTime = viewModel.fixedOutTime,
                         isEarningVisible = isEarningVisible
                     )
                 }
@@ -288,10 +290,68 @@ fun SummaryItem(
 @Composable
 fun AttendanceHistoryItem(
     record: AttendanceRecord,
-    perMinuteRate: Double,
+    dailyRate: Double,
+    fixedInTime: String,
+    fixedOutTime: String,
     isEarningVisible: Boolean = true
 ) {
-    val dayEarning = record.totalMinutes * perMinuteRate
+    val parseTime = { timeStr: String ->
+        try {
+            val parts = timeStr.split(" ")
+            val time = parts[0]
+            val period = if (parts.size > 1) parts[1] else "AM"
+            val timeParts = time.split(":")
+            var hours = timeParts[0].toInt()
+            val minutes = if (timeParts.size > 1) timeParts[1].toInt() else 0
+            if (period == "PM" && hours != 12) hours += 12
+            if (period == "AM" && hours == 12) hours = 0
+            hours * 60 + minutes
+        } catch (e: Exception) {
+            10 * 60
+        }
+    }
+
+    val checkIsLate = { actualIn: Int, scheduledIn: Int, graceMinutes: Int ->
+        var diff = actualIn - scheduledIn
+        if (diff < -12 * 60) diff += 24 * 60
+        if (diff > 12 * 60) diff -= 24 * 60
+        diff > graceMinutes
+    }
+
+    val dayValue = try {
+        if (record.inTime.isBlank()) 0.0
+        else if (record.outTime.isBlank()) 1.0 // Assume full day if checkout is pending
+        else {
+            val recordInMins = parseTime(record.inTime)
+            val recordOutMins = parseTime(record.outTime)
+
+            val fixedInMins = parseTime(fixedInTime)
+            val fixedOutMins = parseTime(fixedOutTime)
+
+            val isLate = checkIsLate(recordInMins, fixedInMins, 15)
+
+            var workedMinutes = recordOutMins - recordInMins
+            if (workedMinutes < 0) workedMinutes += 24 * 60
+
+            var shiftDuration = fixedOutMins - fixedInMins
+            if (shiftDuration < 0) shiftDuration += 24 * 60
+
+            val reqFullDayMins = shiftDuration - 15
+            val reqHalfDayMins = Math.round(shiftDuration * 5.0 / 9.0).toInt()
+
+            if (workedMinutes < reqHalfDayMins) {
+                0.0
+            } else if (workedMinutes >= reqFullDayMins && !isLate) {
+                1.0
+            } else {
+                0.5
+            }
+        }
+    } catch (e: Exception) {
+        1.0
+    }
+
+    val dayEarning = dailyRate * dayValue
     
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -350,12 +410,17 @@ fun AttendanceHistoryItem(
                 )
                 
                 // Day Earning
-                if (perMinuteRate > 0 && record.totalMinutes > 0) {
+                if (dailyRate > 0.0 && record.inTime.isNotBlank()) {
                     Text(
                         text = if (isEarningVisible) "₹${String.format("%,.2f", dayEarning)}" else "₹ ••••",
                         style = MaterialTheme.typography.bodyMedium,
                         fontWeight = FontWeight.Bold,
                         color = Green
+                    )
+                    Text(
+                        text = if (dayValue == 1.0) "Full Day" else if (dayValue == 0.5) "Half Day" else "Absent",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = if (dayValue == 1.0) Green else if (dayValue == 0.5) Color(0xFF2563EB) else Color(0xFFDC2626)
                     )
                 }
                 

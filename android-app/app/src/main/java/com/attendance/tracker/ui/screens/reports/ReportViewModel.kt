@@ -43,8 +43,8 @@ class ReportViewModel @Inject constructor(
     private var userRole: UserRole = UserRole.USER
     private var allRecords: List<AttendanceRecord> = emptyList()
     private var fixedSalary: Double = 0.0
-    private var fixedInTime: String = "10:00:00 AM"
-    private var fixedOutTime: String = "07:00:00 PM"
+    var fixedInTime: String = "10:00:00 AM"
+    var fixedOutTime: String = "07:00:00 PM"
     
     private val calendar = Calendar.getInstance()
     
@@ -70,7 +70,6 @@ class ReportViewModel @Inject constructor(
                 fixedSalary = employee?.fixedSalary ?: 0.0
                 fixedInTime = employee?.fixedInTime ?: "10:00:00 AM"
                 fixedOutTime = employee?.fixedOutTime ?: "07:00:00 PM"
-                _uiState.value = _uiState.value.copy(perMinuteRate = fixedSalary) // Use perMinuteRate state to pass fixedSalary to UI for display
             }
         }
     }
@@ -170,7 +169,8 @@ class ReportViewModel @Inject constructor(
             presentDays = filteredRecords.size,
             totalHours = totalHours,
             totalMinutes = totalMinutes,
-            totalEarning = totalEarning
+            totalEarning = totalEarning,
+            perMinuteRate = dailyRate
         )
     }
 
