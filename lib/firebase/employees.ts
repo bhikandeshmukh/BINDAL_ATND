@@ -91,14 +91,15 @@ export async function addEmployee(employee: Omit<Employee, 'id' | 'createdAt'>):
 
     const id = String(nextId).padStart(3, '0');
 
+    const trimmedName = employee.name.trim();
     // Create safe document ID from name
-    const safeId = employee.name
+    const safeId = trimmedName
       .toLowerCase()
       .replace(/\s+/g, '-')
       .replace(/[^a-z0-9-]/g, '');
 
     // Auto-generate email if not provided
-    const email = employee.email || `${safeId}@company.com`;
+    const email = (employee.email || `${safeId}@company.com`).trim();
 
     const password = employee.password
       ? employee.password.startsWith('$2a$') || employee.password.startsWith('$2b$')
@@ -108,8 +109,8 @@ export async function addEmployee(employee: Omit<Employee, 'id' | 'createdAt'>):
 
     await setDoc(doc(db, COLLECTION_NAME, safeId), {
       '01_id': id,
-      '02_name': employee.name,
-      '03_position': employee.position || '',
+      '02_name': trimmedName,
+      '03_position': (employee.position || '').trim(),
       '04_role': employee.role || 'user',
       '05_status': employee.status || 'active',
       '06_totalWorkingDays': employee.totalWorkingDays || 26,
@@ -117,7 +118,7 @@ export async function addEmployee(employee: Omit<Employee, 'id' | 'createdAt'>):
       '08_fixedOutTime': employee.fixedOutTime || '07:00:00 PM',
       '09_perMinuteRate': employee.perMinuteRate || 0,
       '10_fixedSalary': employee.fixedSalary || 0,
-      '11_username': employee.username || '',
+      '11_username': (employee.username || '').trim(),
       '12_password': password,
       '13_email': email,
       '14_createdAt': Timestamp.now(),
@@ -138,8 +139,8 @@ export async function updateEmployee(employeeId: string, updates: Partial<Employ
     // Convert updates to Firebase field format
     const firebaseUpdates: any = {};
 
-    if (updates.name !== undefined) firebaseUpdates['02_name'] = updates.name;
-    if (updates.position !== undefined) firebaseUpdates['03_position'] = updates.position;
+    if (updates.name !== undefined) firebaseUpdates['02_name'] = updates.name.trim();
+    if (updates.position !== undefined) firebaseUpdates['03_position'] = updates.position.trim();
     if (updates.role !== undefined) firebaseUpdates['04_role'] = updates.role;
     if (updates.status !== undefined) firebaseUpdates['05_status'] = updates.status;
     if (updates.totalWorkingDays !== undefined) firebaseUpdates['06_totalWorkingDays'] = updates.totalWorkingDays;
@@ -147,14 +148,14 @@ export async function updateEmployee(employeeId: string, updates: Partial<Employ
     if (updates.fixedOutTime !== undefined) firebaseUpdates['08_fixedOutTime'] = updates.fixedOutTime;
     if (updates.perMinuteRate !== undefined) firebaseUpdates['09_perMinuteRate'] = updates.perMinuteRate;
     if (updates.fixedSalary !== undefined) firebaseUpdates['10_fixedSalary'] = updates.fixedSalary;
-    if (updates.username !== undefined) firebaseUpdates['11_username'] = updates.username;
+    if (updates.username !== undefined) firebaseUpdates['11_username'] = updates.username.trim();
     if (updates.password !== undefined) {
       firebaseUpdates['12_password'] =
         updates.password && !updates.password.startsWith('$2a$') && !updates.password.startsWith('$2b$')
           ? await hashPassword(updates.password)
           : updates.password;
     }
-    if (updates.email !== undefined) firebaseUpdates['13_email'] = updates.email;
+    if (updates.email !== undefined) firebaseUpdates['13_email'] = updates.email.trim();
 
     // Use setDoc with merge to avoid "document not found" error
     await setDoc(docRef, firebaseUpdates, { merge: true });
