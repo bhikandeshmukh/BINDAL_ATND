@@ -101,6 +101,79 @@ class AuthRepository @Inject constructor(
             Result.failure(Exception("Login failed: ${e.message}"))
         }
     }
+
+    suspend fun register(
+        username: String,
+        password: String,
+        name: String,
+        email: String,
+        salary: Double,
+        inTime: String = "10:00:00 AM",
+        outTime: String = "07:00:00 PM"
+    ): Result<User> {
+        return try {
+            Log.d(TAG, "Attempting registration for username: $username")
+            
+            val existingUsername = findUserByField(FirebaseConfig.EmployeeFields.USERNAME, username)
+            if (existingUsername != null) {
+                return Result.failure(Exception("Username already exists"))
+            }
+            
+            val existingEmail = findUserByField(FirebaseConfig.EmployeeFields.EMAIL, email)
+            if (existingEmail != null) {
+                return Result.failure(Exception("Email already exists"))
+            }
+
+            val snapshot = firestore.collection(FirebaseConfig.EMPLOYEES_COLLECTION).get().await()
+            val existingIds = snapshot.documents.mapNotNull { doc ->
+                doc.getString(FirebaseConfig.EmployeeFields.ID)?.toIntOrNull()
+            }
+            val nextId = if (existingIds.isNotEmpty()) existingIds.max() + 1 else 1
+            val id = String.format("%03d", nextId)
+
+            val safeId = name.lowercase()
+                .replace(Regex("\\s+"), "-")
+                .replace(Regex("[^a-z0-9-]"), "")
+
+            val hashedPassword = BCrypt.hashpw(password, BCrypt.gensalt(10))
+
+            val newUserData = hashMapOf(
+                FirebaseConfig.EmployeeFields.ID to id,
+                FirebaseConfig.EmployeeFields.NAME to name,
+                FirebaseConfig.EmployeeFields.POSITION to "Employee",
+                FirebaseConfig.EmployeeFields.ROLE to "user",
+                FirebaseConfig.EmployeeFields.STATUS to "active",
+                FirebaseConfig.EmployeeFields.TOTAL_WORKING_DAYS to 26,
+                FirebaseConfig.EmployeeFields.FIXED_IN_TIME to inTime,
+                FirebaseConfig.EmployeeFields.FIXED_OUT_TIME to outTime,
+                FirebaseConfig.EmployeeFields.PER_MINUTE_RATE to 0.0,
+                FirebaseConfig.EmployeeFields.FIXED_SALARY to salary,
+                FirebaseConfig.EmployeeFields.USERNAME to username,
+                FirebaseConfig.EmployeeFields.PASSWORD to hashedPassword,
+                FirebaseConfig.EmployeeFields.EMAIL to email,
+                FirebaseConfig.EmployeeFields.CREATED_AT to com.google.firebase.Timestamp.now()
+            )
+
+            firestore.collection(FirebaseConfig.EMPLOYEES_COLLECTION)
+                .document(safeId)
+                .set(newUserData)
+                .await()
+
+            val user = User(
+                id = id,
+                username = username,
+                name = name,
+                role = UserRole.USER,
+                email = email
+            )
+
+            saveUser(user, "firebase_token_${user.id}")
+            Result.success(user)
+        } catch (e: Exception) {
+            Log.e(TAG, "Registration error: ${e.message}", e)
+            Result.failure(Exception("Registration failed: ${e.message}"))
+        }
+    }
     
     private suspend fun findUserByField(fieldName: String, value: String): com.google.firebase.firestore.DocumentSnapshot? {
         return try {

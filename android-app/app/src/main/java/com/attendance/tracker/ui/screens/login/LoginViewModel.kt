@@ -46,7 +46,57 @@ class LoginViewModel @Inject constructor(
             )
         }
     }
+
+    fun register(
+        username: String,
+        password: String,
+        name: String,
+        email: String,
+        salary: Double
+    ) {
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isLoading = true, error = null)
+            
+            val result = authRepository.register(username, password, name, email, salary)
+            
+            result.fold(
+                onSuccess = {
+                    _uiState.value = _uiState.value.copy(
+                        isLoading = false,
+                        isLoggedIn = true
+                    )
+                },
+                onFailure = { exception ->
+                    _uiState.value = _uiState.value.copy(
+                        isLoading = false,
+                        error = exception.message ?: "Registration failed"
+                    )
+                }
+            )
+        }
+    }
     
+    fun googleLogin(email: String, name: String) {
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isLoading = true, error = null)
+            val result = authRepository.saveGoogleUser("g_" + System.currentTimeMillis(), email, name)
+            result.fold(
+                onSuccess = {
+                    _uiState.value = _uiState.value.copy(
+                        isLoading = false,
+                        isLoggedIn = true
+                    )
+                },
+                onFailure = { exception ->
+                    _uiState.value = _uiState.value.copy(
+                        isLoading = false,
+                        error = exception.message ?: "Google Sign-In failed"
+                    )
+                }
+            )
+        }
+    }
+
     fun clearError() {
         _uiState.value = _uiState.value.copy(error = null)
     }
