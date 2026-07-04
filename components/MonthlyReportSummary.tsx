@@ -9,6 +9,7 @@ interface MonthlyReportSummaryProps {
   leaves?: LeaveLike[];
   year: number;
   month: number;
+  holidays?: string[];
 }
 
 export default function MonthlyReportSummary({
@@ -17,6 +18,7 @@ export default function MonthlyReportSummary({
   leaves = [],
   year,
   month,
+  holidays = [],
 }: MonthlyReportSummaryProps) {
   // Calculate summary statistics
   const totalDaysCheckInOnly = records.filter(r => r.inTime && !r.outTime).length;
@@ -42,7 +44,7 @@ export default function MonthlyReportSummary({
   const averageMinutesRemainder = averageMinutesPerDay % 60;
 
   const salarySummaries = employees.map((employee) =>
-    calculateMonthlySalary(employee, records, leaves, year, month)
+    calculateMonthlySalary(employee, records, leaves, year, month, holidays)
   );
   const totalGrossSalary = salarySummaries.reduce((sum, item) => sum + item.grossSalary, 0);
   const totalDeduction = salarySummaries.reduce((sum, item) => sum + item.unpaidDeduction, 0);

@@ -35,10 +35,25 @@ export default function UserReportsView({ userName }: UserReportsViewProps) {
   const currentYear = new Date().getFullYear();
   const years = [currentYear.toString()]; // Only current year
 
+  const [holidays, setHolidays] = useState<string[]>([]);
+
   useEffect(() => {
     fetchEmployees();
     fetchLeaves();
+    fetchHolidays();
   }, []);
+
+  const fetchHolidays = async () => {
+    try {
+      const response = await fetch("/api/holidays");
+      const data = await response.json();
+      if (Array.isArray(data)) {
+        setHolidays(data.map((h: any) => h.date));
+      }
+    } catch (error) {
+      console.error("Error fetching holidays:", error);
+    }
+  };
 
   useEffect(() => {
     fetchMonthlyRecords();
@@ -170,6 +185,7 @@ export default function UserReportsView({ userName }: UserReportsViewProps) {
               leaves={leaves}
               year={parseInt(selectedYear)}
               month={parseInt(selectedMonth)}
+              holidays={holidays}
             />
             {records.length > 0 ? (
               <div className="mt-3 sm:mt-4">

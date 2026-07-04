@@ -126,15 +126,23 @@ export function calculateRecordEarning(record: AttendanceRecord, employee: Emplo
   return Math.round(dailySalary * dayValue.value);
 }
 
+const STATIC_FESTIVE_HOLIDAY_DATES = [
+  "2026-01-01", "2026-01-26", "2026-02-15", "2026-03-04",
+  "2026-03-20", "2026-04-03", "2026-08-15", "2026-08-28",
+  "2026-10-02", "2026-10-20", "2026-11-08", "2026-12-25"
+];
+
 export function calculateMonthlySalary(
   employee: Employee,
   records: AttendanceRecord[],
   leaves: LeaveLike[],
   year: number,
-  month: number
+  month: number,
+  holidays: string[] = []
 ): SalarySummary {
   const workingDays = getWorkingDaysInMonth(year, month);
   const workingDaySet = new Set(workingDays);
+  const monthStr = `${year}-${String(month).padStart(2, "0")}`;
   
   const presentRecords = records.filter(
     (record) => record.employeeName === employee.name && record.inTime && workingDaySet.has(record.date)
@@ -169,19 +177,52 @@ export function calculateMonthlySalary(
     }
   }
 
+  // Count festive holidays (use db holidays list if provided, fallback to static list)
+  const holidayList = holidays.length > 0 ? holidays : STATIC_FESTIVE_HOLIDAY_DATES;
+  const holidayDays = new Set<string>();
+  for (const date of holidayList) {
+    if (date.startsWith(monthStr) && workingDaySet.has(date)) {
+      if (!presentDays.has(date) && !paidLeaveDays.has(date) && !unpaidLeaveDays.has(date)) {
+        holidayDays.add(date);
+      }
+    }
+  }
+
   const fixedSalary = Number(employee.fixedSalary || 0);
   const dailyRate = workingDays.length > 0 ? fixedSalary / workingDays.length : 0;
-  const payableDays = presentPayableDaysSum + paidLeaveDays.size;
-  const unpaidDeduction = unpaidLeaveDays.size * dailyRate;
+  
+  // Total payable days (actual present sum + paid leaves + paid holidays)
+  const payableDays = presentPayableDaysSum + paidLeaveDays.size + holidayDays.size;
+
+  // Unpaid days from leaves
+  const unpaidDaysCount = unpaidLeaveDays.size;
+
+  // Absent days (working days not present, not on leave, and not a festive holiday)
+  let absentDaysCount = 0;
+  for (const date of workingDays) {
+    if (!presentDays.has(date) && !paidLeaveDays.has(date) && !unpaidLeaveDays.has(date) && !holidayDays.has(date)) {
+      absentDaysCount++;
+    }
+  }
+
+  // Total days to deduct salary
+  let totalDeductDays = unpaidDaysCount + absentDaysCount;
+
+  // Adjust/waive 1 free leave per month policy
+  if (totalDeductDays > 0) {
+    totalDeductDays = totalDeductDays - 1;
+  }
+
+  const unpaidDeduction = totalDeductDays * dailyRate;
   const netSalary = Math.max(0, fixedSalary - unpaidDeduction);
 
   return {
     workingDays: workingDays.length,
     presentDays: presentDays.size,
-    paidLeaveDays: paidLeaveDays.size,
+    paidLeaveDays: paidLeaveDays.size + holidayDays.size, // count holidays as paid leave days for reporting
     unpaidLeaveDays: unpaidLeaveDays.size,
     payableDays,
-    absentDays: Math.max(0, workingDays.length - payableDays - unpaidLeaveDays.size),
+    absentDays: absentDaysCount,
     dailyRate,
     grossSalary: fixedSalary,
     unpaidDeduction,

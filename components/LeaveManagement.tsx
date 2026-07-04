@@ -41,6 +41,9 @@ const festiveHolidays = [
 export default function LeaveManagement({ userRole, userName, adminName }: LeaveManagementProps) {
     const [employees, setEmployees] = useState<any[]>([]);
     const [leaves, setLeaves] = useState<LeaveRecord[]>([]);
+    const [dbHolidays, setDbHolidays] = useState<any[]>([]);
+    const [newHolidayName, setNewHolidayName] = useState("");
+    const [newHolidayDate, setNewHolidayDate] = useState("");
     const [showForm, setShowForm] = useState(false);
     const [loading, setLoading] = useState(false);
     const [processingId, setProcessingId] = useState<string | null>(null);
@@ -55,7 +58,58 @@ export default function LeaveManagement({ userRole, userName, adminName }: Leave
     useEffect(() => {
         fetchEmployees();
         fetchLeaves();
+        fetchDbHolidays();
     }, []);
+
+    const fetchDbHolidays = async () => {
+        try {
+            const response = await fetch("/api/holidays");
+            const data = await response.json();
+            setDbHolidays(Array.isArray(data) ? data : []);
+        } catch (error) {
+            console.error("Error fetching db holidays:", error);
+        }
+    };
+
+    const handleAddHoliday = async () => {
+        if (!newHolidayName || !newHolidayDate) return;
+        try {
+            const response = await fetch("/api/holidays", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ name: newHolidayName, date: newHolidayDate }),
+            });
+            if (response.ok) {
+                setNewHolidayName("");
+                setNewHolidayDate("");
+                fetchDbHolidays();
+                alert("✅ Holiday added successfully!");
+            } else {
+                alert("❌ Failed to add holiday");
+            }
+        } catch (error) {
+            console.error("Error adding holiday:", error);
+            alert("❌ Error adding holiday");
+        }
+    };
+
+    const handleDeleteHoliday = async (id: string) => {
+        if (!confirm("Are you sure you want to delete this holiday?")) return;
+        try {
+            const response = await fetch(`/api/holidays/${id}`, {
+                method: "DELETE",
+            });
+            if (response.ok) {
+                fetchDbHolidays();
+                alert("🗑️ Holiday deleted successfully!");
+            } else {
+                alert("❌ Failed to delete holiday");
+            }
+        } catch (error) {
+            console.error("Error deleting holiday:", error);
+            alert("❌ Error deleting holiday");
+        }
+    };
 
     const fetchEmployees = async () => {
         try {
@@ -323,43 +377,87 @@ export default function LeaveManagement({ userRole, userName, adminName }: Leave
                 </div>
 
                 {/* Festive Holidays Card */}
-                <div className="bg-white rounded-xl shadow-md p-4 border border-slate-100">
-                    <h3 className="text-sm sm:text-base font-bold text-slate-800 mb-3 flex items-center gap-2">
-                        🎉 Company Festive Holidays ({currentYear})
-                    </h3>
-                    <div className="max-h-[200px] overflow-y-auto pr-1 space-y-2 custom-scrollbar">
-                        {festiveHolidays.map((holiday, index) => {
-                            // Split year, month, day to construct Date safely avoiding local timezone shifts
-                            const [y, m, d] = holiday.date.split("-").map(Number);
-                            const holidayDate = new Date(y, m - 1, d);
-                            
-                            // Get today's date at midnight for fair comparison
-                            const today = new Date();
-                            today.setHours(0,0,0,0);
-                            const isPast = holidayDate < today;
-                            
-                            return (
-                                <div 
-                                    key={index} 
-                                    className={`flex items-center justify-between p-2 rounded-lg border text-xs transition-all ${
-                                        isPast 
-                                            ? 'bg-slate-50/50 border-slate-100 text-slate-400 line-through' 
-                                            : 'bg-gradient-to-r from-blue-50/20 to-indigo-50/10 border-blue-100 text-slate-700 hover:border-blue-200'
-                                    }`}
-                                >
-                                    <div>
-                                        <p className="font-extrabold">{holiday.name}</p>
-                                        <p className="text-[10px] text-slate-400 font-medium">{holiday.date} • {holiday.day}</p>
+                <div className="bg-white rounded-xl shadow-md p-4 border border-slate-100 flex flex-col justify-between">
+                    <div>
+                        <h3 className="text-sm sm:text-base font-bold text-slate-800 mb-3 flex items-center gap-2">
+                            🎉 Company Festive Holidays ({currentYear})
+                        </h3>
+                        <div className="max-h-[220px] overflow-y-auto pr-1 space-y-2 custom-scrollbar">
+                            {[
+                                ...dbHolidays,
+                                ...festiveHolidays.filter(fh => !dbHolidays.some(dh => dh.date === fh.date))
+                            ].sort((a, b) => a.date.localeCompare(b.date)).map((holiday, index) => {
+                                const [y, m, d] = holiday.date.split("-").map(Number);
+                                const holidayDate = new Date(y, m - 1, d);
+                                const today = new Date();
+                                today.setHours(0,0,0,0);
+                                const isPast = holidayDate < today;
+                                const dayName = holiday.day || holidayDate.toLocaleDateString("en-US", { weekday: "long" });
+                                
+                                return (
+                                    <div 
+                                        key={holiday.id || `static-${index}`} 
+                                        className={`flex items-center justify-between p-2 rounded-lg border text-xs transition-all ${
+                                            isPast 
+                                                ? 'bg-slate-50/50 border-slate-100 text-slate-400 line-through' 
+                                                : 'bg-gradient-to-r from-blue-50/20 to-indigo-50/10 border-blue-100 text-slate-700 hover:border-blue-200'
+                                        }`}
+                                    >
+                                        <div className="flex-1 min-w-0 pr-2">
+                                            <p className="font-extrabold truncate">{holiday.name}</p>
+                                            <p className="text-[10px] text-slate-400 font-medium">{holiday.date} • {dayName}</p>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <span className={`px-2 py-0.5 rounded text-[9px] font-extrabold uppercase ${
+                                                isPast ? 'bg-slate-100 text-slate-400' : 'bg-blue-100 text-blue-800'
+                                            }`}>
+                                                {holiday.status || "Paid"}
+                                            </span>
+                                            {userRole === "admin" && holiday.id && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handleDeleteHoliday(holiday.id)}
+                                                    className="p-1 text-red-500 hover:bg-red-50 rounded transition-colors"
+                                                    title="Delete Holiday"
+                                                >
+                                                    🗑️
+                                                </button>
+                                            )}
+                                        </div>
                                     </div>
-                                    <span className={`px-2 py-0.5 rounded text-[9px] font-extrabold uppercase ${
-                                        isPast ? 'bg-slate-100 text-slate-400' : 'bg-blue-100 text-blue-800'
-                                    }`}>
-                                        {holiday.status}
-                                    </span>
-                                </div>
-                            );
-                        })}
+                                );
+                            })}
+                        </div>
                     </div>
+
+                    {userRole === "admin" && (
+                        <div className="mt-4 pt-3 border-t border-slate-100">
+                            <p className="text-[11px] font-bold text-slate-600 mb-1.5">📢 Add Festive Holiday</p>
+                            <div className="flex gap-2">
+                                <input
+                                    type="text"
+                                    placeholder="Name (e.g. Diwali)"
+                                    value={newHolidayName}
+                                    onChange={(e) => setNewHolidayName(e.target.value)}
+                                    className="flex-1 min-w-0 px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                />
+                                <input
+                                    type="date"
+                                    value={newHolidayDate}
+                                    onChange={(e) => setNewHolidayDate(e.target.value)}
+                                    className="px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                />
+                                <button
+                                    type="button"
+                                    onClick={handleAddHoliday}
+                                    disabled={!newHolidayName || !newHolidayDate}
+                                    className="px-3 py-1 text-xs bg-slate-800 hover:bg-slate-900 text-white rounded font-bold disabled:bg-gray-200 disabled:text-gray-400"
+                                >
+                                    + Add
+                                </button>
+                            </div>
+                        </div>
+                    )}
                 </div>
             </div>
 

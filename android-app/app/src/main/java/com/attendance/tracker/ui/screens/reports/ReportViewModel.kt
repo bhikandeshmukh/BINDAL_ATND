@@ -42,7 +42,9 @@ class ReportViewModel @Inject constructor(
     private var userName: String = ""
     private var userRole: UserRole = UserRole.USER
     private var allRecords: List<AttendanceRecord> = emptyList()
-    private var perMinuteRate: Double = 0.0
+    private var fixedSalary: Double = 0.0
+    private var fixedInTime: String = "10:00:00 AM"
+    private var fixedOutTime: String = "07:00:00 PM"
     
     private val calendar = Calendar.getInstance()
     
@@ -65,8 +67,10 @@ class ReportViewModel @Inject constructor(
             val result = employeeRepository.getEmployees()
             result.onSuccess { employees ->
                 val employee = employees.find { it.name == userName }
-                perMinuteRate = employee?.perMinuteRate ?: 0.0
-                _uiState.value = _uiState.value.copy(perMinuteRate = perMinuteRate)
+                fixedSalary = employee?.fixedSalary ?: 0.0
+                fixedInTime = employee?.fixedInTime ?: "10:00:00 AM"
+                fixedOutTime = employee?.fixedOutTime ?: "07:00:00 PM"
+                _uiState.value = _uiState.value.copy(perMinuteRate = fixedSalary) // Use perMinuteRate state to pass fixedSalary to UI for display
             }
         }
     }
@@ -120,12 +124,44 @@ class ReportViewModel @Inject constructor(
         
         val totalMinutes = filteredRecords.sumOf { it.totalMinutes }
         val totalHours = totalMinutes / 60
-        val totalEarning = totalMinutes * perMinuteRate
         
-        // Get days in selected month
+        // Count working days in month (excluding Sundays)
         val cal = Calendar.getInstance()
         cal.set(year, month - 1, 1)
         val daysInMonth = cal.getActualMaximum(Calendar.DAY_OF_MONTH)
+        var workingDaysCount = 0
+        for (d in 1..daysInMonth) {
+            cal.set(year, month - 1, d)
+            if (cal.get(Calendar.DAY_OF_WEEK) != Calendar.SUNDAY) {
+                workingDaysCount++
+            }
+        }
+
+        val dailyRate = if (workingDaysCount > 0) fixedSalary / workingDaysCount else 0.0
+
+        // Calculate actual payable days worked
+        var presentPayableDays = 0.0
+        filteredRecords.forEach { record ->
+            presentPayableDays += getAttendanceDayValue(record, fixedInTime, fixedOutTime)
+        }
+
+        // Days missed = workingDaysCount - presentPayableDays
+        val deductDays = if (workingDaysCount > presentPayableDays) workingDaysCount - presentPayableDays else 0.0
+
+        // Apply 1 monthly free leave adjustment waiver
+        val adjustedDeductDays = if (deductDays > 0.0) {
+            val waived = deductDays - 1.0
+            if (waived > 0.0) waived else 0.0
+        } else {
+            0.0
+        }
+
+        val totalEarning = if (fixedSalary > 0.0) {
+            val net = fixedSalary - (adjustedDeductDays * dailyRate)
+            if (net > 0.0) net else 0.0
+        } else {
+            0.0
+        }
         
         _uiState.value = _uiState.value.copy(
             isLoading = false,
@@ -136,6 +172,67 @@ class ReportViewModel @Inject constructor(
             totalMinutes = totalMinutes,
             totalEarning = totalEarning
         )
+    }
+
+    private fun getAttendanceDayValue(
+        record: AttendanceRecord,
+        fixedInTime: String,
+        fixedOutTime: String
+    ): Double {
+        if (record.inTime.isBlank()) return 0.0
+        if (record.outTime.isBlank()) return 1.0 // Assume full day if checkout is pending
+
+        val parseTime = { timeStr: String ->
+            try {
+                val parts = timeStr.split(" ")
+                val time = parts[0]
+                val period = if (parts.size > 1) parts[1] else "AM"
+                val timeParts = time.split(":")
+                var hours = timeParts[0].toInt()
+                val minutes = if (timeParts.size > 1) timeParts[1].toInt() else 0
+                if (period == "PM" && hours != 12) hours += 12
+                if (period == "AM" && hours == 12) hours = 0
+                hours * 60 + minutes
+            } catch (e: Exception) {
+                10 * 60
+            }
+        }
+
+        val checkIsLate = { actualIn: Int, scheduledIn: Int, graceMinutes: Int ->
+            var diff = actualIn - scheduledIn
+            if (diff < -12 * 60) diff += 24 * 60
+            if (diff > 12 * 60) diff -= 24 * 60
+            diff > graceMinutes
+        }
+
+        return try {
+            val recordInMins = parseTime(record.inTime)
+            val recordOutMins = parseTime(record.outTime)
+
+            val fixedInMins = parseTime(fixedInTime)
+            val fixedOutMins = parseTime(fixedOutTime)
+
+            val isLate = checkIsLate(recordInMins, fixedInMins, 15)
+
+            var workedMinutes = recordOutMins - recordInMins
+            if (workedMinutes < 0) workedMinutes += 24 * 60
+
+            var shiftDuration = fixedOutMins - fixedInMins
+            if (shiftDuration < 0) shiftDuration += 24 * 60
+
+            val reqFullDayMins = shiftDuration - 15
+            val reqHalfDayMins = Math.round(shiftDuration * 5.0 / 9.0).toInt()
+
+            if (workedMinutes < reqHalfDayMins) {
+                0.0
+            } else if (workedMinutes >= reqFullDayMins && !isLate) {
+                1.0
+            } else {
+                0.5
+            }
+        } catch (e: Exception) {
+            1.0
+        }
     }
     
     private fun getAvailableMonths(records: List<AttendanceRecord>): List<Pair<Int, Int>> {
