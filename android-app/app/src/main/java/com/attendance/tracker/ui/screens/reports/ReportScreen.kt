@@ -18,6 +18,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.attendance.tracker.data.model.AttendanceRecord
 import com.attendance.tracker.data.model.UserRole
 import com.attendance.tracker.ui.theme.Green
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
