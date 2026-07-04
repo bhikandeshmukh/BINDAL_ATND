@@ -150,11 +150,20 @@ export function calculateMonthlySalary(
 
   const presentDays = new Set(presentRecords.map((r) => r.date));
 
-  let presentPayableDaysSum = 0;
+  // Group present records by date to find max attendance day value (prevents duplicate punch doubling)
+  const dateToMaxDayValue = new Map<string, number>();
   for (const record of presentRecords) {
-    const dayValue = getAttendanceDayValue(record, employee);
-    presentPayableDaysSum += dayValue.value;
+    const dayValue = getAttendanceDayValue(record, employee).value;
+    const existing = dateToMaxDayValue.get(record.date) || 0;
+    if (dayValue > existing) {
+      dateToMaxDayValue.set(record.date, dayValue);
+    }
   }
+
+  let presentPayableDaysSum = 0;
+  dateToMaxDayValue.forEach((val) => {
+    presentPayableDaysSum += val;
+  });
 
   const approvedLeaves = leaves.filter(
     (leave) =>
@@ -205,13 +214,14 @@ export function calculateMonthlySalary(
     }
   }
 
-  // Total days to deduct salary
-  let totalDeductDays = unpaidDaysCount + absentDaysCount;
-
-  // Adjust/waive 1 free leave per month policy
-  if (totalDeductDays > 0) {
-    totalDeductDays = totalDeductDays - 1;
+  // Adjust/waive 1 free leave per month policy (only applies to approved unpaid leaves)
+  let adjustedUnpaidDaysCount = unpaidDaysCount;
+  if (adjustedUnpaidDaysCount > 0) {
+    adjustedUnpaidDaysCount = adjustedUnpaidDaysCount - 1;
   }
+
+  // Total days to deduct salary
+  const totalDeductDays = adjustedUnpaidDaysCount + absentDaysCount;
 
   const unpaidDeduction = totalDeductDays * dailyRate;
   const netSalary = Math.max(0, fixedSalary - unpaidDeduction);

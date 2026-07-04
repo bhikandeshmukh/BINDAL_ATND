@@ -15,6 +15,10 @@ import java.text.SimpleDateFormat
 import java.util.*
 import javax.inject.Inject
 
+import com.attendance.tracker.data.repository.LeaveRepository
+import com.attendance.tracker.data.model.LeaveRecord
+import com.attendance.tracker.data.model.LeaveStatus
+
 data class ReportUiState(
     val isLoading: Boolean = false,
     val records: List<AttendanceRecord> = emptyList(),
@@ -33,8 +37,11 @@ data class ReportUiState(
 @HiltViewModel
 class ReportViewModel @Inject constructor(
     private val attendanceRepository: AttendanceRepository,
-    private val employeeRepository: EmployeeRepository
+    private val employeeRepository: EmployeeRepository,
+    private val leaveRepository: LeaveRepository
 ) : ViewModel() {
+    
+    private var allLeaves: List<LeaveRecord> = emptyList()
     
     private val _uiState = MutableStateFlow(ReportUiState())
     val uiState: StateFlow<ReportUiState> = _uiState.asStateFlow()
@@ -78,6 +85,14 @@ class ReportViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true)
             
+            // Fetch leaves
+            val leavesResult = leaveRepository.getLeaves()
+            leavesResult.onSuccess { leaves ->
+                allLeaves = leaves.filter { 
+                    it.employeeName == userName && it.status == LeaveStatus.APPROVED
+                }
+            }
+
             val result = attendanceRepository.getAttendance()
             
             result.fold(
@@ -125,38 +140,82 @@ class ReportViewModel @Inject constructor(
         val totalHours = totalMinutes / 60
         
         // Count working days in month (excluding Sundays)
+        val workingDaysSet = mutableSetOf<String>()
         val cal = Calendar.getInstance()
         cal.set(year, month - 1, 1)
         val daysInMonth = cal.getActualMaximum(Calendar.DAY_OF_MONTH)
-        var workingDaysCount = 0
         for (d in 1..daysInMonth) {
             cal.set(year, month - 1, d)
             if (cal.get(Calendar.DAY_OF_WEEK) != Calendar.SUNDAY) {
-                workingDaysCount++
+                val dateStr = String.format("%04d-%02d-%02d", year, month, d)
+                workingDaysSet.add(dateStr)
             }
         }
+        val workingDaysCount = workingDaysSet.size
 
         val dailyRate = if (workingDaysCount > 0) fixedSalary / workingDaysCount else 0.0
 
-        // Calculate actual payable days worked
-        var presentPayableDays = 0.0
+        // Calculate actual payable days worked using date grouping to prevent duplicate records
+        val dateToMaxVal = mutableMapOf<String, Double>()
         filteredRecords.forEach { record ->
-            presentPayableDays += getAttendanceDayValue(record, fixedInTime, fixedOutTime)
+            val dayValue = getAttendanceDayValue(record, fixedInTime, fixedOutTime)
+            val existing = dateToMaxVal[record.date] ?: 0.0
+            if (dayValue > existing) {
+                dateToMaxVal[record.date] = dayValue
+            }
+        }
+        val presentPayableDays = dateToMaxVal.values.sum()
+        val presentDaysSet = dateToMaxVal.keys
+
+        // Parse approved leaves for this month
+        val unpaidLeaveDaysSet = mutableSetOf<String>()
+        val paidLeaveDaysSet = mutableSetOf<String>()
+        val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.US)
+
+        allLeaves.forEach { leave ->
+            try {
+                val isUnpaid = leave.leaveType.lowercase() == "unpaid"
+                val startCal = Calendar.getInstance()
+                startCal.time = sdf.parse(leave.startDate) ?: Date()
+                val endCal = Calendar.getInstance()
+                endCal.time = sdf.parse(leave.endDate) ?: Date()
+                
+                while (!startCal.after(endCal)) {
+                    val dateStr = sdf.format(startCal.time)
+                    if (workingDaysSet.contains(dateStr) && !presentDaysSet.contains(dateStr)) {
+                        if (isUnpaid) {
+                            unpaidLeaveDaysSet.add(dateStr)
+                        } else {
+                            paidLeaveDaysSet.add(dateStr)
+                        }
+                    }
+                    startCal.add(Calendar.DAY_OF_MONTH, 1)
+                }
+            } catch (e: Exception) {
+                // Ignore parsing errors
+            }
         }
 
-        // Days missed = workingDaysCount - presentPayableDays
-        val deductDays = if (workingDaysCount > presentPayableDays) workingDaysCount - presentPayableDays else 0.0
+        val unpaidLeaveDaysCount = unpaidLeaveDaysSet.size
 
-        // Apply 1 monthly free leave adjustment waiver
-        val adjustedDeductDays = if (deductDays > 0.0) {
-            val waived = deductDays - 1.0
-            if (waived > 0.0) waived else 0.0
-        } else {
-            0.0
+        // Absent days: working days that are not present, not on unpaid leaves, and not on paid leaves
+        var absentDaysCount = 0
+        workingDaysSet.forEach { dateStr ->
+            if (!presentDaysSet.contains(dateStr) && 
+                !unpaidLeaveDaysSet.contains(dateStr) && 
+                !paidLeaveDaysSet.contains(dateStr)) {
+                absentDaysCount++
+            }
         }
+
+        // Apply 1 monthly free leave waiver to approved unpaid leaves only
+        val adjustedUnpaidLeavesCount = if (unpaidLeaveDaysCount > 0) unpaidLeaveDaysCount - 1 else 0
+
+        // Total days to deduct salary
+        val totalDeductDays = adjustedUnpaidLeavesCount + absentDaysCount
 
         val totalEarning = if (fixedSalary > 0.0) {
-            val net = fixedSalary - (adjustedDeductDays * dailyRate)
+            val net = fixedSalary - (totalDeductDays * dailyRate)
             if (net > 0.0) net else 0.0
         } else {
             0.0
