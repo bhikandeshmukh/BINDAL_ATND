@@ -11,7 +11,7 @@ android {
     compileSdk = 34
 
     defaultConfig {
-        applicationId = "com.attendance.tracker"
+        applicationId = "com.bindal.punching"
         minSdk = 26
         targetSdk = 34
         versionCode = 1
